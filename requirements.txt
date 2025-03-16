@@ -2,3 +2,4 @@ tobii-research==2.1.0
 keyboard==0.13.5
 psycopg2==2.9.10
 pylsl==1.17.6
+pandas==2.2.3

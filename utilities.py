@@ -1,4 +1,6 @@
 import psycopg2
+import pandas as pd
+import json
 
 def printRed(skk): print("\033[91m {}\033[00m" .format(skk))
 def printGreen(skk): print("\033[92m {}\033[00m" .format(skk))
@@ -8,6 +10,29 @@ def printPurple(skk): print("\033[95m {}\033[00m" .format(skk))
 def printCyan(skk): print("\033[96m {}\033[00m" .format(skk))
 def printLightGray(skk): print("\033[97m {}\033[00m" .format(skk))
 def printBlack(skk): print("\033[98m {}\033[00m" .format(skk))
+
+
+def clean_data(type, data):
+    # type is either "user_pos_data" or "gaze_data"
+    # data is in JSON format, representing 1 sample
+
+    # Different flow for each type of data
+    cleaned_data = {}
+    if type == "user_pos_data":
+        cleaned_data = data.copy()
+        cleaned_data = pd.DataFrame(cleaned_data).fillna(-1)
+        cleaned_data = cleaned_data.groupby(['left_user_position_validity','right_user_position_validity']).agg(lambda x: tuple(x)).reset_index()
+        cleaned_data = json.loads(cleaned_data.to_json(orient='records'))[0]
+    if type == "gaze_data":
+        try:
+            cleaned_data = json.dumps(data)
+            # This is a very hacky way to fill NaN values. A more elegant way is more than welcome to replace this part.
+            cleaned_data = cleaned_data.replace("NaN", "-1").replace("[NaN, NaN]", "[-1, -1]").replace("[NaN, NaN, NaN]", "[-1, -1, -1]")
+            cleaned_data = json.loads(cleaned_data)
+        except Exception as e:
+            print(e)
+    return cleaned_data
+
 
 def insert_row(conn,
                 schema="public",

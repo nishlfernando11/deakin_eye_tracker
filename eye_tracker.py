@@ -23,6 +23,9 @@ def gaze_data_callback(gaze_data):
     global eye_tracker_data
     global round_id
     global conn
+
+    # Preprocess
+    gaze_data = clean_data("gaze_data", gaze_data)
     
     # Assume that there will be 1 call to gaze_data_callback per 1 call to user_pos_data_callback.
     # If there are 2 or more calls to gaze_data_callback before user_pos_data_callback is called, raise an error that the subscription is out of sync.
@@ -44,7 +47,7 @@ def gaze_data_callback(gaze_data):
                     time.time(),
                     pylsl.local_clock(),
                     round_id,
-                    eye_tracker_data
+                    json.dumps(eye_tracker_data)
             ))
         eye_tracker_data = {}
 
@@ -53,6 +56,9 @@ def user_pos_data_callback(user_pos_data):
     global eye_tracker_data
     global round_id
     global conn
+
+    # Preprocess
+    user_pos_data = clean_data("user_pos_data", user_pos_data)
     
     # Assume that there will be 1 call to gaze_data_callback per 1 call to user_pos_data_callback.
     # If there are 2 or more calls to user_pos_data_callback before gaze_data_callback is called, raise an error that the subscription is out of sync.
@@ -74,7 +80,7 @@ def user_pos_data_callback(user_pos_data):
                     time.time(),
                     pylsl.local_clock(),
                     round_id,
-                    eye_tracker_data
+                    json.dumps(eye_tracker_data)
             ))
         eye_tracker_data = {}
 
@@ -122,18 +128,18 @@ eye_tracker_cols = ["event_time","unix_timestamp","lsl_timestamp","round_id","ey
 is_ongoing = True
 eye_tracker_data = {}
 my_eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, gaze_data_callback, as_dictionary=True)
+my_eyetracker.subscribe_to(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback, as_dictionary=True)
 # my_eyetracker.subscribe_to(tr.EYETRACKER_EYE_IMAGES, eye_image_data_callback, as_dictionary=True)
 # my_eyetracker.subscribe_to(tr.EYETRACKER_EYE_OPENNESS_DATA, eye_openness_data_callback, as_dictionary=True)
 # my_eyetracker.subscribe_to(tr.EYETRACKER_EXTERNAL_SIGNAL, ext_signal_data_callback, as_dictionary=True)
-my_eyetracker.subscribe_to(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback, as_dictionary=True)
 while is_ongoing:
     if keyboard.is_pressed("esc"):
         is_ongoing = False
-        conn.close()
         print("Ended.")
-        time.sleep(2)   # Wait to finalize inserting data into db
         my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)
+        my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
         # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EYE_IMAGES, eye_image_data_callback)
         # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EYE_OPENNESS_DATA, eye_openness_data_callback)
         # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EXTERNAL_SIGNAL, ext_signal_data_callback)
-        my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
+
+conn.close()
