@@ -21,17 +21,70 @@ Callbacks
 """
 def gaze_data_callback(gaze_data):
     global eye_tracker_data
+    global round_id
     global conn
+    
+    # Assume that there will be 1 call to gaze_data_callback per 1 call to user_pos_data_callback.
+    # If there are 2 or more calls to gaze_data_callback before user_pos_data_callback is called, raise an error that the subscription is out of sync.
+    if "gaze_data" in eye_tracker_data:
+        raise Exception("!!! Subscription is out of sync !!!")
+
+    # Check if user position data have been added. If there are user position data, append user position data to gaze data and save to database.
+    # It could be harder if we subscribe to more data than the current EYETRACKER_GAZE_DATA and EYETRACKER_USER_POSITION_GUIDE.
+    # Refresh eye_tracker_data for the next row insert in database.
+    # For reference, columns to be inserted in database are ["event_time","unix_timestamp","lsl_timestamp","round_id","eye_tracker_data"]
+    eye_tracker_data["gaze_data"] = gaze_data
+    if "user_pos_data" in eye_tracker_data:
+        insert_row(conn,
+            schema="public",
+            table="eye_tracker_data",
+            columns=eye_tracker_cols,
+            data=(
+                    time.time(),
+                    time.time(),
+                    pylsl.local_clock(),
+                    round_id,
+                    eye_tracker_data
+            ))
+        eye_tracker_data = {}
 
 
 def user_pos_data_callback(user_pos_data):
     global eye_tracker_data
+    global round_id
     global conn
+    
+    # Assume that there will be 1 call to gaze_data_callback per 1 call to user_pos_data_callback.
+    # If there are 2 or more calls to user_pos_data_callback before gaze_data_callback is called, raise an error that the subscription is out of sync.
+    if "user_pos_data" in eye_tracker_data:
+        raise Exception("!!! Subscription is out of sync !!!")
+
+    # Check if gaze data have been added. If there are gaze data, append gaze data to user position data and save to database.
+    # It could be harder if we subscribe to more data than the current EYETRACKER_GAZE_DATA and EYETRACKER_USER_POSITION_GUIDE.
+    # Refresh eye_tracker_data for the next row insert in database.
+    # For reference, columns to be inserted in database are ["event_time","unix_timestamp","lsl_timestamp","round_id","eye_tracker_data"]
+    eye_tracker_data["user_pos_data"] = user_pos_data
+    if "gaze_data" in eye_tracker_data:
+        insert_row(conn,
+            schema="public",
+            table="eye_tracker_data",
+            columns=eye_tracker_cols,
+            data=(
+                    time.time(),
+                    time.time(),
+                    pylsl.local_clock(),
+                    round_id,
+                    eye_tracker_data
+            ))
+        eye_tracker_data = {}
 
 
 """
 Start
 """
+# Manually input round_id
+round_id = str(input("Please put in the Round ID: "))
+
 #find device
 found_eyetrackers = tr.find_all_eyetrackers()
 my_eyetracker = found_eyetrackers[0]
@@ -84,9 +137,3 @@ while is_ongoing:
         # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EYE_OPENNESS_DATA, eye_openness_data_callback)
         # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EXTERNAL_SIGNAL, ext_signal_data_callback)
         my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
-
-    # insert_row(conn,
-    #         schema="public",
-    #         table="eye_tracker_data",
-    #         columns=eye_tracker_cols,
-    #         data=data)
