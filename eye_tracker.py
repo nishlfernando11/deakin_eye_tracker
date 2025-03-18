@@ -15,7 +15,8 @@ DB_NAME = "experiments"
 DB_USER = "experiments"
 DB_PASSWORD = "experiments"
 
-
+count_gaze = 0
+count_user = 0
 """
 Callbacks
 """
@@ -23,6 +24,9 @@ def gaze_data_callback(gaze_data):
     global eye_tracker_data
     global round_id
     global conn
+    global outlet
+    global count_gaze
+    count_gaze += 1
 
     # Preprocess
     gaze_data = clean_data("gaze_data", gaze_data)
@@ -38,6 +42,8 @@ def gaze_data_callback(gaze_data):
     # For reference, columns to be inserted in database are ["event_time","unix_timestamp","lsl_timestamp","round_id","eye_tracker_data"]
     eye_tracker_data["gaze_data"] = gaze_data
     if "user_pos_data" in eye_tracker_data:
+        data = json.dumps(eye_tracker_data)
+        # Push data to Postgres
         insert_row(conn,
             schema="public",
             table="eye_tracker_data",
@@ -47,8 +53,11 @@ def gaze_data_callback(gaze_data):
                     time.time(),
                     pylsl.local_clock(),
                     round_id,
-                    json.dumps(eye_tracker_data)
+                    data
             ))
+        # Push data to LSL stream
+        # print("Pushing sample to LSL stream:", data)
+        outlet.push_sample([data])
         eye_tracker_data = {}
 
 
@@ -56,6 +65,9 @@ def user_pos_data_callback(user_pos_data):
     global eye_tracker_data
     global round_id
     global conn
+    global outlet
+    global count_user
+    count_user += 1
 
     # Preprocess
     user_pos_data = clean_data("user_pos_data", user_pos_data)
@@ -71,6 +83,8 @@ def user_pos_data_callback(user_pos_data):
     # For reference, columns to be inserted in database are ["event_time","unix_timestamp","lsl_timestamp","round_id","eye_tracker_data"]
     eye_tracker_data["user_pos_data"] = user_pos_data
     if "gaze_data" in eye_tracker_data:
+        data = json.dumps(eye_tracker_data)
+        # Push data to Postgres
         insert_row(conn,
             schema="public",
             table="eye_tracker_data",
@@ -80,8 +94,11 @@ def user_pos_data_callback(user_pos_data):
                     time.time(),
                     pylsl.local_clock(),
                     round_id,
-                    json.dumps(eye_tracker_data)
+                    data
             ))
+        # Push data to LSL stream
+        # print("Pushing sample to LSL stream:", data)
+        outlet.push_sample([data])
         eye_tracker_data = {}
 
 
@@ -90,6 +107,11 @@ Start
 """
 # Manually input round_id
 round_id = str(input("Please put in the Round ID: "))
+
+# Initialize the stream outlet once
+info = pylsl.StreamInfo(name="EyeTrackerStream", type="Event", channel_count=1, nominal_srate=0, channel_format='string')
+outlet = pylsl.StreamOutlet(info)
+print("Stream outlet created.")
 
 #find device
 found_eyetrackers = tr.find_all_eyetrackers()
@@ -132,10 +154,11 @@ my_eyetracker.subscribe_to(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_call
 # my_eyetracker.subscribe_to(tr.EYETRACKER_EYE_IMAGES, eye_image_data_callback, as_dictionary=True)
 # my_eyetracker.subscribe_to(tr.EYETRACKER_EYE_OPENNESS_DATA, eye_openness_data_callback, as_dictionary=True)
 # my_eyetracker.subscribe_to(tr.EYETRACKER_EXTERNAL_SIGNAL, ext_signal_data_callback, as_dictionary=True)
+start_time = time.time()
 while is_ongoing:
     if keyboard.is_pressed("esc"):
         is_ongoing = False
-        print("Ended.")
+        print(f"Ended. Data collection lasted for {time.time() - start_time} seconds. Gaze instances: {count_gaze} | User position instances: {count_user}")
         my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)
         my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
         # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EYE_IMAGES, eye_image_data_callback)
