@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS public.eye_tracker_data
+CREATE TABLE IF NOT EXISTS eye_tracker_data
 (
     id serial NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
