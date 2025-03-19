@@ -12,7 +12,8 @@ sio = socketio.Client()
 """
 Config
 """
-DB_HOST = "localhost"
+# DB_HOST = "localhost"
+DB_HOST = "10.104.22.80"
 DB_PORT = 5433
 DB_NAME = "experiments"
 DB_USER = "experiments"
