@@ -1,4 +1,4 @@
-import socketio
+import socket
 import keyboard
 from utilities import *
 import tobii_research as tr
@@ -7,7 +7,11 @@ import json
 import psycopg2
 import pylsl
 
-sio = socketio.Client()
+UI_HOST = "localhost"
+UI_PORT = 80
+
+s = socket.socket()
+s.connect((UI_HOST, UI_PORT)) 
 
 """
 Config
@@ -139,11 +143,7 @@ eye_tracker_cols = ["event_time","unix_timestamp","lsl_timestamp","round_id","ey
 eye_tracker_data = {}
 my_eyetracker = None
 
-@sio.event
-def connect():
-    print('connection established')
 
-@sio.on("start_game")
 def eye_tracker_start(data):
     global my_eyetracker
     #find device
@@ -167,7 +167,7 @@ def eye_tracker_start(data):
     # my_eyetracker.subscribe_to(tr.EYETRACKER_EXTERNAL_SIGNAL, ext_signal_data_callback, as_dictionary=True)
     print('message received with ', data)
 
-@sio.on("end_game")
+
 def eye_tracker_stop():
     global my_eyetracker
     global conn
@@ -179,8 +179,8 @@ def eye_tracker_stop():
     conn.close()
     print('disconnected from server')
 
-sio.connect('http://localhost:80')
-sio.wait()
+print("Received: ",s.recv(1024).decode())
+
 if keyboard.is_pressed("esc"):
     print(f"Data collection ended.")
     my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)

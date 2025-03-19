@@ -3,4 +3,4 @@ keyboard==0.13.5
 psycopg2==2.9.10
 pylsl==1.17.6
 pandas==2.2.3
-python-socketio==5.12.1
+requests==2.32.3
