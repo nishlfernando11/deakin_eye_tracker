@@ -1,4 +1,5 @@
 import socketio
+import keyboard
 from utilities import *
 import tobii_research as tr
 import time
@@ -6,7 +7,6 @@ import json
 import psycopg2
 import pylsl
 
-print(socketio.__file__)
 sio = socketio.Client()
 
 """
@@ -148,7 +148,7 @@ def eye_tracker_start(data):
     #find device
     found_eyetrackers = tr.find_all_eyetrackers()
     my_eyetracker = found_eyetrackers[0]
-    round_id = data.get("","round_1")
+    round_id = data.get("round_id","round_1")
     print("Address: " + my_eyetracker.address)
     print("Model: " + my_eyetracker.model)
     print("Name (It's OK if this is empty): " + my_eyetracker.device_name)
@@ -180,3 +180,7 @@ def eye_tracker_stop():
 
 sio.connect('http://localhost:80')
 sio.wait()
+if keyboard.is_pressed("esc"):
+    print(f"Data collection ended.")
+    my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)
+    my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
