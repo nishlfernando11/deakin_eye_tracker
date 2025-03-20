@@ -4,3 +4,5 @@ psycopg2==2.9.10
 pylsl==1.17.6
 pandas==2.2.3
 requests==2.32.3
+python-dotenv==1.0.1
+python-socketio==5.0.0

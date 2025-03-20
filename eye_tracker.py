@@ -9,11 +9,19 @@ from utilities import *
 """
 Config
 """
-DB_HOST = "localhost"
-DB_PORT = 5433
-DB_NAME = "experiments"
-DB_USER = "experiments"
-DB_PASSWORD = "experiments"
+
+import os
+from dotenv import load_dotenv;
+
+# load .env environment variables
+load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+
 
 count_gaze = 0
 count_user = 0
@@ -109,7 +117,7 @@ Start
 round_id = str(input("Please put in the Round ID: "))
 
 # Initialize the stream outlet once
-info = pylsl.StreamInfo(name="EyeTrackerStream", type="Event", channel_count=1, nominal_srate=0, channel_format='string')
+info = pylsl.StreamInfo(name="EyeTrackerStream", type="Event", channel_count=1, nominal_srate=60.0, channel_format=pylsl.cf_string, source_id="tobii")
 outlet = pylsl.StreamOutlet(info)
 print("Stream outlet created.")
 

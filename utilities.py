@@ -40,6 +40,7 @@ def insert_row(conn,
                 columns=[],
                 data=()):
     """ Insert multiple rows into the specified table  """
+    # print("Inserting to DB ")
     cols = ", ".join(columns)
     vals = ",".join(len(columns)*["%s"])
     sql = f"INSERT INTO {schema}.{table}({cols}) VALUES("+ vals +");"
@@ -49,6 +50,7 @@ def insert_row(conn,
             cur.execute(sql, data)
         # commit the changes to the database
         conn.commit()
+        # print("Inserted to DB ")
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
 
