@@ -51,7 +51,11 @@ def disconnect():
     print('disconnected from server')
 
 print(UI_HOST)
-sio.connect(UI_HOST)
+
+try:
+    sio.connect(UI_HOST)
+except Exception as e:
+     printRed(f"socket connection failed with {e}")
 
 """
 Config
@@ -65,6 +69,7 @@ Callbacks
 def gaze_data_callback(gaze_data):
     global eye_tracker_data
     global round_id
+    global player_id
     global conn
     global outlet
     global count_gaze
@@ -98,6 +103,7 @@ def gaze_data_callback(gaze_data):
                         time.time(),
                         pylsl.local_clock(),
                         round_id,
+                        player_id,
                         data
                 ))
             # Push data to LSL stream
@@ -111,6 +117,7 @@ def gaze_data_callback(gaze_data):
 def user_pos_data_callback(user_pos_data):
     global eye_tracker_data
     global round_id
+    global player_id
     global conn
     global outlet
     global count_user
@@ -144,6 +151,7 @@ def user_pos_data_callback(user_pos_data):
                         time.time(),
                         pylsl.local_clock(),
                         round_id,
+                        player_id,
                         data
                 ))
             # Push data to LSL stream
@@ -182,7 +190,7 @@ except Exception as e:
 
 
 #start data collection
-eye_tracker_cols = ["event_time","unix_timestamp","lsl_timestamp","round_id","eye_tracker_data"]
+eye_tracker_cols = ["event_time","unix_timestamp","lsl_timestamp","round_id","player_id", "eye_tracker_data"]
 eye_tracker_data = {}
 my_eyetracker = None
 
@@ -233,23 +241,24 @@ def eye_tracker_stop():
     print('disconnected from server')
 
 
-if keyboard.is_pressed("esc"):
-    print(f"Data collection ended.")
-    sio.disconnect()
+# if keyboard.is_pressed("esc"):
+#     print(f"Data collection ended.")
+#     sio.disconnect()
 
-    my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)
-    my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
+#     my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)
+#     my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
 
 
 while is_ongoing:
     if keyboard.is_pressed("esc"):
         is_ongoing = False
         print(f"Ended Data collection. Gaze instances: {count_gaze} | User position instances: {count_user}")
-        my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)
-        my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
-        # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EYE_IMAGES, eye_image_data_callback)
-        # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EYE_OPENNESS_DATA, eye_openness_data_callback)
-        # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EXTERNAL_SIGNAL, ext_signal_data_callback)
+        if my_eyetracker:
+            my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)
+            my_eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_pos_data_callback)
+            # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EYE_IMAGES, eye_image_data_callback)
+            # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EYE_OPENNESS_DATA, eye_openness_data_callback)
+            # my_eyetracker.unsubscribe_from(tr.EYETRACKER_EXTERNAL_SIGNAL, ext_signal_data_callback)
 
         conn.close()
 

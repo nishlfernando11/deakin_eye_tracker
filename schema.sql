@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS eye_tracker_data
     unix_timestamp double precision NOT NULL,
     lsl_timestamp double precision NOT NULL,
     round_id text COLLATE pg_catalog."default" NOT NULL,
+    player_id text COLLATE pg_catalog."default" NOT NULL,
     eye_tracker_data json,
     CONSTRAINT eye_tracker_data_pkey PRIMARY KEY (id)
 );
