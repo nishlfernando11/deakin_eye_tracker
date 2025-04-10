@@ -32,10 +32,12 @@ def on_start_game(data):
     print('Game started ', data)
     global round_id
     global player_id
+    global uid
     global is_ongoing
     round_id = data["start_info"]["round_id"]
     player_id = data["start_info"]["player_id"]
-    print(f"round_id: {round_id}, player_id: {player_id}")
+    uid = data["start_info"]["uid"]
+    print(f"round_id: {round_id}, player_id: {player_id}, uid: {uid}")
     eye_tracker_start()
     
 
@@ -70,6 +72,7 @@ def gaze_data_callback(gaze_data):
     global eye_tracker_data
     global round_id
     global player_id
+    global uid
     global conn
     global outlet
     global count_gaze
@@ -104,6 +107,7 @@ def gaze_data_callback(gaze_data):
                         pylsl.local_clock(),
                         round_id,
                         player_id,
+                        uid,
                         data
                 ))
             # Push data to LSL stream
@@ -118,6 +122,7 @@ def user_pos_data_callback(user_pos_data):
     global eye_tracker_data
     global round_id
     global player_id
+    global uid
     global conn
     global outlet
     global count_user
@@ -152,6 +157,7 @@ def user_pos_data_callback(user_pos_data):
                         pylsl.local_clock(),
                         round_id,
                         player_id,
+                        uid,
                         data
                 ))
             # Push data to LSL stream
@@ -190,7 +196,7 @@ except Exception as e:
 
 
 #start data collection
-eye_tracker_cols = ["event_time","unix_timestamp","lsl_timestamp","round_id","player_id", "eye_tracker_data"]
+eye_tracker_cols = ["event_time","unix_timestamp","lsl_timestamp","round_id","player_id", "uid", "eye_tracker_data"]
 eye_tracker_data = {}
 my_eyetracker = None
 
