@@ -27,7 +27,7 @@ is_ongoing = True
 def connect():
     print('connection established')
 
-@sio.on('start_ecg')
+@sio.on('start_sensors')
 def on_start_game(data):
     print('Game started ', data)
     global round_id
@@ -41,7 +41,7 @@ def on_start_game(data):
     eye_tracker_start()
     
 
-@sio.on('stop_ecg')
+@sio.on('stop_sensors')
 def on_end_game(data):
     print('Game ended ')
     # print('Game ended ', data)
